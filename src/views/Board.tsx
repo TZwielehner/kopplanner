@@ -1,7 +1,28 @@
 import { useState } from 'react';
 import { SectionDocs } from '../components/Attachments';
 import { TaskCard } from '../components/TaskCard';
-import type { Group, GroupBy, Task } from '../model';
+import { CATEGORIES, CATEGORY_COLOR, CATEGORY_LABEL, STATUS_LABEL, type Group, type GroupBy, type Task } from '../model';
+
+const DROP_STATUSES = ['GREEN', 'YELLOW', 'RED', 'REPORTED_DONE', 'DONE'];
+
+/** Bei Status-Gruppierungen auch leere Zielspalten anzeigen, damit man dorthin ziehen kann. */
+function withDropColumns(groups: Group[], by: GroupBy): Group[] {
+  if (by !== 'status' && by !== 'category') return groups;
+  const have = new Set(groups.map((g) => g.key));
+  const extra: Group[] =
+    by === 'status'
+      ? Object.keys(STATUS_LABEL)
+          .filter((s) => DROP_STATUSES.includes(s) && !have.has(s))
+          .map((s) => ({ key: s, label: STATUS_LABEL[s], sort: Object.keys(STATUS_LABEL).indexOf(s), tasks: [] }))
+      : CATEGORIES.filter((c) => (c === 'IN_PROGRESS' || c === 'DONE') && !have.has(c)).map((c) => ({
+          key: c,
+          label: CATEGORY_LABEL[c],
+          sort: CATEGORIES.indexOf(c),
+          color: CATEGORY_COLOR[c],
+          tasks: [],
+        }));
+  return [...groups, ...extra].sort((a, b) => (a.sort < b.sort ? -1 : a.sort > b.sort ? 1 : 0));
+}
 
 /** Welche Spalten beim Ablegen in einen Status übersetzt werden können. */
 function dropStatus(by: GroupBy, key: string): 'GREEN' | 'YELLOW' | 'RED' | 'REPORTED_DONE' | 'DONE' | null {
@@ -23,7 +44,7 @@ export function Board({ groups, groupBy, tasks, apiKey, onOpen }: Props) {
   const canDrop = groupBy === 'category' || groupBy === 'status';
   return (
     <div className="board">
-      {groups.map((g) => {
+      {withDropColumns(groups, groupBy).map((g) => {
         const st = canDrop ? dropStatus(groupBy, g.key) : null;
         return (
           <div
@@ -53,6 +74,7 @@ export function Board({ groups, groupBy, tasks, apiKey, onOpen }: Props) {
               </div>
             )}
             <div className="colbody">
+              {st && g.tasks.length === 0 && <div className="dropzone">Hierher ziehen</div>}
               {g.tasks.map((t) => (
                 <TaskCard key={t.id} task={t} onOpen={onOpen} draggable={canDrop} />
               ))}
