@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { loadSession, login, logout, type Session } from './api/auth';
+import { clearAttachmentCache } from './api/attachments';
 import { ApiError, loadProjectData } from './api/rest';
 import { sendDateUpdate, sendStatusReport } from './api/rtc';
 import type { ProjectData } from './api/types';
@@ -80,6 +81,7 @@ export default function App() {
     }
     setLoading(true);
     setError(null);
+    clearAttachmentCache();
     try {
       setData(await loadProjectData(PROJECT_ID, apiKey));
     } catch (e) {
@@ -208,7 +210,7 @@ export default function App() {
 
       <main className="content">
         {!data && !loading && !error && <p className="muted">Bitte API-Key unter „Verbindung“ eintragen.</p>}
-        {data && view === 'board' && <Board groups={groups} groupBy={groupBy} tasks={visible} onOpen={open} />}
+        {data && view === 'board' && <Board groups={groups} groupBy={groupBy} tasks={visible} apiKey={apiKey} onOpen={open} />}
         {data && view === 'grid' && <Grid groups={groups} onOpen={open} />}
         {data && view === 'calendar' && <Calendar tasks={visible} onOpen={open} />}
         {data && view === 'charts' && <Charts tasks={visible} />}
@@ -245,6 +247,7 @@ export default function App() {
         <EditDialog
           task={editing.task}
           canWrite={!!session}
+          apiKey={apiKey}
           initialDates={editing.dates}
           initialStatus={editing.status}
           onCancel={() => setEditing(null)}

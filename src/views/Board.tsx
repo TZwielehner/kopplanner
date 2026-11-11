@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { SectionDocs } from '../components/Attachments';
 import { TaskCard } from '../components/TaskCard';
 import type { Group, GroupBy, Task } from '../model';
 
@@ -13,10 +14,11 @@ interface Props {
   groups: Group[];
   groupBy: GroupBy;
   tasks: Task[];
+  apiKey: string;
   onOpen: (t: Task, opts?: { status?: 'GREEN' | 'YELLOW' | 'RED' | 'REPORTED_DONE' | 'DONE' }) => void;
 }
 
-export function Board({ groups, groupBy, tasks, onOpen }: Props) {
+export function Board({ groups, groupBy, tasks, apiKey, onOpen }: Props) {
   const [over, setOver] = useState<string | null>(null);
   const canDrop = groupBy === 'category' || groupBy === 'status';
   return (
@@ -45,6 +47,11 @@ export function Board({ groups, groupBy, tasks, onOpen }: Props) {
               {g.color && <i className="dot" style={{ background: g.color }} />}
               {g.label} <span className="muted">({g.tasks.length})</span>
             </div>
+            {groupBy === 'bucket' && g.key !== '_none' && (
+              <div className="colh-docs">
+                <SectionDocs sectionId={g.key} apiKey={apiKey} />
+              </div>
+            )}
             <div className="colbody">
               {g.tasks.map((t) => (
                 <TaskCard key={t.id} task={t} onOpen={onOpen} draggable={canDrop} />
