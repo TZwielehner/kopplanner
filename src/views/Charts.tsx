@@ -69,12 +69,19 @@ function StackedBars({ tasks, by, height = 220 }: { tasks: Task[]; by: GroupBy; 
   const step = niceStep(max);
   const top = Math.ceil(max / step) * step;
   const barW = 34;
-  const gap = 26;
-  const left = 60;
-  const width = left + 40 + groups.length * (barW + gap) + 10;
+  const gap = 18;
+  const left = 36; // Platz für die Y-Achsenwerte
+  const offset = 22; // Abstand erste Säule zur Y-Achse
+  const width = left + offset + groups.length * (barW + gap) + 4;
+  const svgH = height + 90;
+  // Skaliert auf die Kartenbreite; erst wenn die Schrift zu klein würde (< 75 %), wird gescrollt.
   return (
     <div className="barscroll">
-      <svg width={Math.max(width, 300)} height={height + 90} role="img">
+      <svg
+        viewBox={`0 0 ${width} ${svgH}`}
+        style={{ width: '100%', maxWidth: width, minWidth: Math.round(width * 0.75), height: 'auto' }}
+        role="img"
+      >
         {Array.from({ length: top / step + 1 }, (_, i) => {
           const y = height - (i * step * height) / top + 10;
           return (
@@ -89,7 +96,7 @@ function StackedBars({ tasks, by, height = 220 }: { tasks: Task[]; by: GroupBy; 
         {groups.map((g, i) => {
           const c = count(g.tasks);
           let y = height + 10;
-          const x = left + 40 + i * (barW + gap);
+          const x = left + offset + i * (barW + gap);
           return (
             <g key={g.key}>
               {CATEGORIES.map((k) => {

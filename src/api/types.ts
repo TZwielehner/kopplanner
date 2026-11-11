@@ -45,6 +45,22 @@ export interface ContributorGroup {
   id: string;
   name: string;
   permission: 'EDITOR' | 'PROGRESS_REPORTER' | 'VIEWER';
+  memberships?: Membership[];
+}
+
+export interface User {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  isActive: boolean;
+  thumbnailUrl: string | null;
+}
+
+export interface Membership {
+  id: string;
+  permission: string;
+  user: User;
 }
 
 export interface Milestone {

@@ -65,3 +65,4 @@ Datumslogik: koppla speichert Zeitpunkte in UTC und das Ende exklusiv (`finishAt
 | `npm run dev` | Entwicklungsserver |
 | `npm run build` | Typprüfung + Produktions-Build nach `dist/` |
 | `npm run preview` | Build lokal ansehen |
+| `npm run build:single` | Eine einzelne `dist-single/index.html` (JS/CSS eingebettet), per Doppelklick ohne Webserver zu öffnen |

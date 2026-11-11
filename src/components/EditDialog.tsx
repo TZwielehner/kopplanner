@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { TaskAttachments } from './Attachments';
 import { STATUS_LABEL, addDays, dueDate, fmtDate, toInputDate, toKopplaIso, type Task } from '../model';
 
 export type EditResult =
@@ -29,6 +30,7 @@ function parseInput(v: string) {
 interface Props {
   task: Task;
   canWrite: boolean;
+  apiKey: string;
   /** Vorschlag, z. B. aus Drag & Drop im Kalender */
   initialDates?: { start: Date; due: Date };
   initialStatus?: (typeof STATUS_OPTIONS)[number];
@@ -36,7 +38,7 @@ interface Props {
   onSubmit: (r: EditResult) => Promise<void>;
 }
 
-export function EditDialog({ task, canWrite, initialDates, initialStatus, onCancel, onSubmit }: Props) {
+export function EditDialog({ task, canWrite, apiKey, initialDates, initialStatus, onCancel, onSubmit }: Props) {
   const [tab, setTab] = useState<'status' | 'dates'>(initialDates ? 'dates' : 'status');
   const [status, setStatus] = useState<(typeof STATUS_OPTIONS)[number]>(
     initialStatus ?? ((STATUS_OPTIONS as readonly string[]).includes(task.status) ? (task.status as never) : 'GREEN'),
@@ -114,6 +116,15 @@ export function EditDialog({ task, canWrite, initialDates, initialStatus, onCanc
           {task.bucketPath} · {task.tradeName}
           {task.order.isFixed && ' · fixiert'}
         </div>
+        {task.people.length > 0 && (
+          <div className="small">
+            <b>{task.groupName}:</b> {task.people.map((p) => p.name).join(', ')}
+          </div>
+        )}
+
+        {!confirming && (
+          <TaskAttachments sectionId={task.bucketId === '_none' ? null : task.bucketId} orderId={task.id} apiKey={apiKey} />
+        )}
 
         {!confirming ? (
           <>
