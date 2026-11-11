@@ -28,6 +28,19 @@ export const STATUS_LABEL: Record<string, string> = {
   DONE: 'Erledigt',
 };
 
+export interface Person {
+  id: string;
+  name: string;
+  initials: string;
+}
+
+export function toPerson(u: { id: string; firstName: string | null; lastName: string | null; email: string }): Person {
+  const name = [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email;
+  const initials =
+    ((u.firstName?.[0] ?? '') + (u.lastName?.[0] ?? '')).toUpperCase() || u.email.slice(0, 2).toUpperCase();
+  return { id: u.id, name, initials };
+}
+
 export interface Task {
   order: Order;
   id: string;
@@ -44,6 +57,8 @@ export interface Task {
   tradeName: string;
   tradeColor: string | null;
   groupName: string;
+  /** Personen = aktive Mitglieder der zugewiesenen Gruppe (koppla weist Aufträge Gruppen zu, nicht Personen). */
+  people: Person[];
   report: StatusReport | null;
 }
 
@@ -153,6 +168,7 @@ export function buildTasks(data: ProjectData): Task[] {
       tradeName: tr?.name ?? 'Nicht zugewiesen',
       tradeColor: tr?.color ?? null,
       groupName: g?.name ?? 'Ohne Gruppe',
+      people: (g?.memberships ?? []).filter((m) => m.user.isActive).map((m) => toPerson(m.user)),
       report: reports.get(o.id) ?? null,
     };
   });

@@ -37,6 +37,25 @@ export function StatusIcon({ task }: { task: Task }) {
   );
 }
 
+const MAX_AVATARS = 4;
+
+export function People({ task }: { task: Task }) {
+  const shown = task.people.slice(0, MAX_AVATARS);
+  const rest = task.people.length - shown.length;
+  const all = task.people.map((p) => p.name).join(', ');
+  return (
+    <div className="people" title={`${task.groupName}: ${all}`}>
+      {shown.map((p) => (
+        <span key={p.id} className="avatar" title={p.name}>
+          {p.initials}
+        </span>
+      ))}
+      {rest > 0 && <span className="avatar more">+{rest}</span>}
+      <span className="muted small">{task.groupName}</span>
+    </div>
+  );
+}
+
 interface Props {
   task: Task;
   onOpen: (t: Task) => void;
@@ -71,6 +90,7 @@ export function TaskCard({ task, onOpen, draggable }: Props) {
           {task.tradeName}
         </span>
       </div>
+      {task.people.length > 0 && <People task={task} />}
     </div>
   );
 }
