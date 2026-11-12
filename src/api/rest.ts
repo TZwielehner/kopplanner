@@ -46,3 +46,23 @@ export async function loadProjectData(projectId: string, apiKey: string): Promis
   ]);
   return { project, orders, sections, trades, groups, milestones, latestReports };
 }
+
+export interface ProjectSummary {
+  id: string;
+  name: string;
+  internalId: string | null;
+  lifecycleStatus: string | null;
+}
+
+/** Alle Projekte, auf die der API-Key Zugriff hat (GET /projects → { projects: [...] }). */
+export async function loadProjects(apiKey: string): Promise<ProjectSummary[]> {
+  const body = await get<{ projects?: Array<Record<string, unknown>> }>('/projects', apiKey);
+  return (body.projects ?? [])
+    .map((p) => ({
+      id: String(p.id),
+      name: typeof p.name === 'string' ? p.name : String(p.id),
+      internalId: typeof p.internalId === 'string' && p.internalId ? p.internalId : null,
+      lifecycleStatus: typeof p.lifecycleStatus === 'string' ? p.lifecycleStatus : null,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'de'));
+}

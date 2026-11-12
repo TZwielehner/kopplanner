@@ -176,9 +176,10 @@ export function buildTasks(data: ProjectData): Task[] {
 
 // ---------- Gruppierung ----------
 
-export type GroupBy = 'bucket' | 'trade' | 'group' | 'category' | 'status' | 'start' | 'due';
+export type GroupBy = 'none' | 'bucket' | 'trade' | 'group' | 'category' | 'status' | 'start' | 'due';
 
 export const GROUP_LABEL: Record<GroupBy, string> = {
+  none: 'Keine Gruppierung',
   bucket: 'Bucket (WBS-Abschnitt)',
   trade: 'Zugewiesen zu (Gewerk)',
   group: 'Gruppe',
@@ -208,6 +209,9 @@ function dateBucket(d: Date, today: Date): { key: string; label: string; sort: n
   return { key: 'later', label: 'Später', sort: 5 };
 }
 
+/** Schlüssel der einzigen Gruppe bei „Keine Gruppierung“. */
+export const ALL_KEY = '_all';
+
 export function groupTasks(tasks: Task[], by: GroupBy): Group[] {
   const today = startOfDay(new Date());
   const map = new Map<string, Group>();
@@ -221,6 +225,9 @@ export function groupTasks(tasks: Task[], by: GroupBy): Group[] {
   };
   for (const t of tasks) {
     switch (by) {
+      case 'none':
+        add(ALL_KEY, 'Alle Aufgaben', 0, t);
+        break;
       case 'bucket':
         add(t.bucketId, t.bucketName, t.bucketOrder, t);
         break;

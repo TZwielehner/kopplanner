@@ -46,7 +46,7 @@ select, input[type='text'], input[type='email'], input[type='password'], input[t
 .tabs { display: flex; gap: 6px; margin-left: 12px; }
 .tab { border-radius: 18px; padding: 5px 14px; }
 .tab.on { border: 2px solid var(--accent); color: var(--accent); font-weight: 600; padding: 4px 13px; }
-.search { width: 200px; }
+.search { width: 160px; }
 .groupby { display: flex; gap: 6px; align-items: center; font-size: 13px; }
 .dropdown { position: relative; }
 .menu { position: absolute; right: 0; top: 34px; z-index: 20; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.15); padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; white-space: nowrap; }
@@ -172,3 +172,5 @@ a.att:hover .attname { text-decoration: underline; }
 .card[draggable="true"]:active { cursor: grabbing; }
 .dropzone { border: 2px dashed var(--border); border-radius: 6px; padding: 24px 8px; text-align: center; color: var(--muted); font-size: 12px; }
 .pill[draggable="true"] { cursor: grab; }
+select.project { max-width: 200px; text-overflow: ellipsis; }
+.groupby select { max-width: 150px; }
