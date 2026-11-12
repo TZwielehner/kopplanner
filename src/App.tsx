@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { loadSession, login, logout, type Session } from './api/auth';
 import { clearAttachmentCache } from './api/attachments';
-import { ApiError, loadProjectData } from './api/rest';
+import { ApiError, loadProjectData, loadProjects, type ProjectSummary } from './api/rest';
 import { sendDateUpdate, sendStatusReport } from './api/rtc';
 import type { ProjectData } from './api/types';
 import { Connection } from './components/Connection';
@@ -23,8 +23,15 @@ import { Calendar } from './views/Calendar';
 import { Charts } from './views/Charts';
 import { Grid } from './views/Grid';
 
-// Fest konfiguriertes Projekt (REKO AK BIM). Überschreibbar per VITE_KOPPLA_PROJECT_ID.
-const PROJECT_ID = import.meta.env.VITE_KOPPLA_PROJECT_ID || 'UHJvamVjdE5vZGU6MTc3MDg=';
+// Standardprojekt (REKO AK BIM), bis eines ausgewählt wurde. Überschreibbar per VITE_KOPPLA_PROJECT_ID.
+const DEFAULT_PROJECT_ID = import.meta.env.VITE_KOPPLA_PROJECT_ID || 'UHJvamVjdE5vZGU6MTc3MDg=';
+
+const LIFECYCLE: Record<string, string> = {
+  TEST: 'Test',
+  IN_PREPARATION: 'in Vorbereitung',
+  COMPLETED: 'abgeschlossen',
+  ARCHIVED: 'archiviert',
+};
 
 type View = 'grid' | 'board' | 'calendar' | 'charts';
 const VIEWS: [View, string][] = [
@@ -66,11 +73,27 @@ export default function App() {
   const [view, setView] = useState<View>(() => store('kopplanner.view', 'board'));
   const [groupBy, setGroupBy] = useState<GroupBy>(() => store('kopplanner.groupBy', 'bucket'));
   const [filter, setFilter] = useState<Filter>(() => store('kopplanner.filter', { text: '', categories: [], hideDone: true }));
+  const [projectId, setProjectId] = useState<string>(() => store('kopplanner.projectId', DEFAULT_PROJECT_ID));
+  const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [showConn, setShowConn] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const [editing, setEditing] = useState<Editing | null>(null);
 
   useEffect(() => persist('kopplanner.view', view), [view]);
+  useEffect(() => persist('kopplanner.projectId', projectId), [projectId]);
+
+  // Projektliste für die Auswahl; Fehler hier blockieren die App nicht.
+  useEffect(() => {
+    if (!apiKey) return;
+    let alive = true;
+    loadProjects(apiKey).then(
+      (p) => alive && setProjects(p),
+      () => alive && setProjects([]),
+    );
+    return () => {
+      alive = false;
+    };
+  }, [apiKey]);
   useEffect(() => persist('kopplanner.groupBy', groupBy), [groupBy]);
   useEffect(() => persist('kopplanner.filter', filter), [filter]);
 
@@ -83,7 +106,7 @@ export default function App() {
     setError(null);
     clearAttachmentCache();
     try {
-      setData(await loadProjectData(PROJECT_ID, apiKey));
+      setData(await loadProjectData(projectId, apiKey));
     } catch (e) {
       setError(
         e instanceof ApiError && e.status === 401
@@ -95,7 +118,7 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  }, [apiKey]);
+  }, [apiKey, projectId]);
 
   useEffect(() => {
     reload();
@@ -118,7 +141,7 @@ export default function App() {
     if (!editing || !session) throw new Error('Nicht angemeldet');
     const t = editing.task;
     if (r.kind === 'status') {
-      await sendStatusReport(session, setSession, PROJECT_ID, {
+      await sendStatusReport(session, setSession, projectId, {
         orderId: t.id,
         status: r.status,
         progress: r.progress,
@@ -126,7 +149,7 @@ export default function App() {
         comment: r.comment,
       });
     } else {
-      await sendDateUpdate(session, setSession, PROJECT_ID, { id: t.id, startAt: r.startAt, finishAt: r.finishAt });
+      await sendDateUpdate(session, setSession, projectId, { id: t.id, startAt: r.startAt, finishAt: r.finishAt });
     }
     setEditing(null);
     setToast(`„${t.name}“ in koppla gespeichert.`);
@@ -145,9 +168,31 @@ export default function App() {
     <div className="app">
       <header className="top">
         <div className="logo">Kopplanner</div>
-        <div className="project" title={PROJECT_ID}>
-          {data?.project?.name ?? 'Projekt'}
-        </div>
+        {projects.length > 0 ? (
+          <select
+            className="project"
+            value={projectId}
+            onChange={(e) => {
+              setData(null);
+              setProjectId(e.target.value);
+            }}
+            title="Projekt wählen"
+            aria-label="Projekt"
+          >
+            {!projects.some((p) => p.id === projectId) && <option value={projectId}>{data?.project?.name ?? 'Projekt'}</option>}
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+                {p.internalId ? ` (${p.internalId})` : ''}
+                {p.lifecycleStatus && p.lifecycleStatus !== 'ACTIVE' ? ` – ${LIFECYCLE[p.lifecycleStatus] ?? p.lifecycleStatus}` : ''}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <div className="project" title={projectId}>
+            {data?.project?.name ?? 'Projekt'}
+          </div>
+        )}
         <nav className="tabs">
           {VIEWS.map(([v, l]) => (
             <button key={v} className={`tab ${view === v ? 'on' : ''}`} onClick={() => setView(v)}>

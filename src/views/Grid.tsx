@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { CategoryBadge, StatusIcon } from '../components/TaskCard';
-import { STATUS_LABEL, dueDate, fmtDate, type Group, type Task } from '../model';
+import { ALL_KEY, STATUS_LABEL, dueDate, fmtDate, type Group, type Task } from '../model';
 
 type SortKey = 'name' | 'start' | 'due' | 'progress' | 'status' | 'trade' | 'bucket';
 
@@ -89,11 +89,13 @@ function GroupRows({
 }) {
   return (
     <>
-      <tr className="grp" onClick={onToggle}>
-        <td colSpan={COLS.length}>
-          {collapsed ? '▸' : '▾'} {g.label} <span className="muted">({g.tasks.length})</span>
-        </td>
-      </tr>
+      {g.key !== ALL_KEY && (
+        <tr className="grp" onClick={onToggle}>
+          <td colSpan={COLS.length}>
+            {collapsed ? '▸' : '▾'} {g.label} <span className="muted">({g.tasks.length})</span>
+          </td>
+        </tr>
+      )}
       {!collapsed &&
         g.tasks.map((t) => (
           <tr key={t.id} className="row" onClick={() => onOpen(t)}>
