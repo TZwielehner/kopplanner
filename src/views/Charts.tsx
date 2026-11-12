@@ -27,7 +27,7 @@ function Donut({ tasks }: { tasks: Task[] }) {
   let off = 0;
   const remaining = tasks.length - c.DONE;
   return (
-    <svg viewBox="0 0 220 220" width="220" height="220" role="img" aria-label="Status-Verteilung">
+    <svg viewBox="0 0 220 220" width="180" height="180" role="img" aria-label="Status-Verteilung">
       <g transform="rotate(-90 110 110)">
         {CATEGORIES.map((k) => {
           const len = (c[k] / total) * C;
@@ -63,7 +63,7 @@ function Donut({ tasks }: { tasks: Task[] }) {
   );
 }
 
-function StackedBars({ tasks, by, height = 220 }: { tasks: Task[]; by: GroupBy; height?: number }) {
+function StackedBars({ tasks, by, height = 150 }: { tasks: Task[]; by: GroupBy; height?: number }) {
   const groups = groupTasks(tasks, by);
   const max = Math.max(1, ...groups.map((g) => g.tasks.length));
   const step = niceStep(max);
@@ -73,7 +73,7 @@ function StackedBars({ tasks, by, height = 220 }: { tasks: Task[]; by: GroupBy; 
   const left = 36; // Platz für die Y-Achsenwerte
   const offset = 22; // Abstand erste Säule zur Y-Achse
   const width = left + offset + groups.length * (barW + gap) + 4;
-  const svgH = height + 90;
+  const svgH = height + 80; // Platz für schräge Beschriftungen
   // Skaliert auf die Kartenbreite; erst wenn die Schrift zu klein würde (< 75 %), wird gescrollt.
   return (
     <div className="barscroll">
@@ -158,31 +158,28 @@ export function Charts({ tasks }: { tasks: Task[] }) {
           <div className="l">Ø Fortschritt</div>
         </div>
       </div>
+      <Legend />
       <div className="chartrow">
         <div className="panel">
           <h3>Status</h3>
           <div className="center">
             <Donut tasks={tasks} />
           </div>
-          <Legend />
         </div>
         <div className="panel">
           <h3>Bucket (WBS-Abschnitt)</h3>
           <StackedBars tasks={tasks} by="bucket" />
-          <Legend />
         </div>
         <div className="panel">
           <h3>Fälligkeit</h3>
           <StackedBars tasks={tasks} by="due" />
-          <Legend />
         </div>
-      </div>
-      <div className="panel">
-        <h3>
-          Zugewiesen zu <span className="muted">(koppla-Gewerk)</span>
-        </h3>
-        <StackedBars tasks={tasks} by="trade" height={180} />
-        <Legend />
+        <div className="panel">
+          <h3>
+            Zugewiesen zu <span className="muted">(Gewerk)</span>
+          </h3>
+          <StackedBars tasks={tasks} by="trade" />
+        </div>
       </div>
     </div>
   );
