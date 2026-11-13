@@ -39,13 +39,55 @@ interface Props {
   onOpen: (t: Task, opts?: { status?: 'GREEN' | 'YELLOW' | 'RED' | 'REPORTED_DONE' | 'DONE' }) => void;
 }
 
+const COLLAPSE_KEY = 'kopplanner.boardCollapsed';
+
+function loadCollapsed(): Record<string, string[]> {
+  try {
+    const v = JSON.parse(localStorage.getItem(COLLAPSE_KEY) ?? '{}');
+    return v && typeof v === 'object' ? v : {};
+  } catch {
+    return {};
+  }
+}
+
 export function Board({ groups, groupBy, tasks, apiKey, onOpen }: Props) {
   const [over, setOver] = useState<string | null>(null);
+  const [collapsedAll, setCollapsedAll] = useState(loadCollapsed);
+  const collapsed = new Set(collapsedAll[groupBy] ?? []);
+  const toggle = (key: string) => {
+    const next = new Set(collapsed);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    const all = { ...collapsedAll, [groupBy]: [...next] };
+    setCollapsedAll(all);
+    try {
+      localStorage.setItem(COLLAPSE_KEY, JSON.stringify(all));
+    } catch {
+      /* ohne Speicher nur für diese Sitzung */
+    }
+  };
   const canDrop = groupBy === 'category' || groupBy === 'status';
   return (
     <div className="board">
       {withDropColumns(groups, groupBy).map((g) => {
         const st = canDrop ? dropStatus(groupBy, g.key) : null;
+        const isCollapsed = collapsed.has(g.key);
+        if (isCollapsed)
+          return (
+            <button
+              key={g.key}
+              type="button"
+              className="col collapsed"
+              onClick={() => toggle(g.key)}
+              title={`${g.label} ausklappen`}
+              aria-expanded={false}
+            >
+              <span className="chev">›</span>
+              {g.color && <i className="dot" style={{ background: g.color }} />}
+              <span className="vlabel">{g.label}</span>
+              <span className="muted">{g.tasks.length}</span>
+            </button>
+          );
         return (
           <div
             key={g.key}
@@ -65,6 +107,15 @@ export function Board({ groups, groupBy, tasks, apiKey, onOpen }: Props) {
             }}
           >
             <div className="colh">
+              <button
+                type="button"
+                className="chev"
+                onClick={() => toggle(g.key)}
+                title={`${g.label} einklappen`}
+                aria-expanded={true}
+              >
+                ‹
+              </button>
               {g.color && <i className="dot" style={{ background: g.color }} />}
               {g.label} <span className="muted">({g.tasks.length})</span>
             </div>
